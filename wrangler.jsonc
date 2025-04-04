@@ -4,17 +4,40 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "fresh-mcp-worker",
+	"name": "solana-rpc-cache-worker",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-03-13",
 	"observability": {
 		"enabled": true
-	}
+	},
+	/**
+	 * R2 Bucket Configuration
+	 * https://developers.cloudflare.com/r2/api/workers/workers-api-reference/#r2-bindings
+	 */
+	"r2_buckets": [
+		{
+			"binding": "DATA_BUCKET",
+			"bucket_name": "solana-rpc-cache" // Updated bucket name
+		}
+	],
+	/**
+	 * KV Namespace Configuration
+	 * https://developers.cloudflare.com/workers/wrangler/configuration/#kv-namespaces
+	 */
+	"kv_namespaces": [
+		{
+			"binding": "LOOKUP_KV",
+			// These IDs will be populated by the deploy.sh script
+			// or need to be filled in manually if not using the script.
+			"id": "YOUR_KV_ID_WILL_BE_POPULATED_BY_DEPLOY_SCRIPT",
+			"preview_id": "YOUR_PREVIEW_KV_ID_WILL_BE_POPULATED_BY_DEPLOY_SCRIPT"
+		}
+	],
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
 	 */
-	// "placement": { "mode": "smart" },
+	"placement": { "mode": "smart" },
 
 	/**
 	 * Bindings
@@ -27,17 +50,19 @@
 	 * Environment Variables
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
 	 */
-	// "vars": { "MY_VARIABLE": "production_value" },
+	"vars": {
+		"CACHE_TTL_MINUTES": "5", // Note: Default TTL is now set higher in src/index.ts
+		"API_KEY": "your-api-key-here" // Changed from API_SECRET
+	}, // Removed trailing comma here
 	/**
 	 * Note: Use secrets to store sensitive data.
+	 * API_KEY and SHARED_SECRET should be added via wrangler secret:
+	 * Run: wrangler secret put API_KEY
+	 * Run: wrangler secret put SHARED_SECRET
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
 	 */
 
-	/**
-	 * Static Assets
-	 * https://developers.cloudflare.com/workers/static-assets/binding/
-	 */
-	// "assets": { "directory": "./public/", "binding": "ASSETS" },
+	// Removed: "assets" section
 
 	/**
 	 * Service Bindings (communicate between multiple Workers)

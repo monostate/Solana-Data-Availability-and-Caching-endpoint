@@ -1,0 +1,24 @@
+# --- Upstream Solana RPC Provider ---
+# Full URL of the Solana RPC endpoint this worker will connect TO.
+# IMPORTANT: Include any necessary API keys required by your provider directly in this URL.
+# Example using Helius (Recommended): Replace <YOUR_HELIUS_API_KEY> with your actual Helius key.
+SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=<YOUR_HELIUS_API_KEY>
+
+# --- Worker Access Keys (Secrets) ---
+# Secret key required for clients to send requests TO this worker.
+# Clients must include this in the 'Authorization: Bearer <API_KEY>' header.
+API_KEY=replace-with-your-secret-worker-api-key
+
+# Separate secret key required to access the /admin/* endpoints of this worker.
+# Use this in the 'Authorization: Bearer <SHARED_SECRET>' header for admin requests.
+SHARED_SECRET=replace-with-your-secret-admin-key
+
+# --- Cache Configuration ---
+# Default cache Time-To-Live in minutes. Specific RPC methods may override this.
+# Set high for Data Availability Layer use cases (e.g., 7 days = 10080).
+CACHE_TTL_MINUTES=10080
+
+# Set to "true" to disable automatic cache expiration based on TTL.
+# Data will be stored indefinitely until manually deleted or R2 limits are reached.
+# Useful for pure DAL use cases. If false or unset, TTLs apply.
+DISABLE_TTL="false"
