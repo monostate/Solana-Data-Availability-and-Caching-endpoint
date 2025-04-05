@@ -1,6 +1,7 @@
 # Solana RPC Cache Worker
 
-![Monostate Logo](Logo%20monostate%20completo%20png%20preto.png)
+![monostate-img-github](https://github.com/user-attachments/assets/d956284f-d3bd-4e5c-b370-d3003ca73c5b)
+
 
 A high-performance Solana RPC caching layer built on Cloudflare Workers, KV, and R2 storage. Deploy this worker to provide a fast, reliable, and rate-limited caching proxy for your Solana RPC endpoint.
 
