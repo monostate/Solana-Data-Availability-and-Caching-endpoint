@@ -9,9 +9,16 @@ SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=<YOUR_HELIUS_API_KEY>
 # Clients must include this in the 'Authorization: Bearer <API_KEY>' header.
 API_KEY=replace-with-your-secret-worker-api-key
 
-# Separate secret key required to access the /admin/* endpoints of this worker.
 # Use this in the 'Authorization: Bearer <SHARED_SECRET>' header for admin requests.
 SHARED_SECRET=replace-with-your-secret-admin-key
+
+# --- Deployment Script State (Saved by deploy.sh after successful run) ---
+# PROJECT_NAME=your-chosen-project-name
+# WORKER_NAME=your-chosen-project-name
+# KV_BINDING_NAME=your-chosen-project-name-kv
+# KV_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# KV_PREVIEW_ID=yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+# R2_BUCKET_NAME=your-chosen-project-name-cache
 
 # --- Cache Configuration ---
 # Default cache Time-To-Live in minutes. Specific RPC methods may override this.
