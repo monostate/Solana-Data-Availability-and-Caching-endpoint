@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "solana-rpc-cache-worker",
+	"name": "PLACEHOLDER_WORKER_NAME", // Placeholder
 	"main": "src/index.ts",
 	"compatibility_date": "2025-03-13",
 	"observability": {
@@ -16,8 +16,8 @@
 	 */
 	"r2_buckets": [
 		{
-			"binding": "DATA_BUCKET",
-			"bucket_name": "solana-rpc-cache" // Updated bucket name
+			"binding": "DATA_BUCKET", // Binding name remains constant in code
+			"bucket_name": "PLACEHOLDER_R2_BUCKET_NAME" // Placeholder
 		}
 	],
 	/**
@@ -26,11 +26,10 @@
 	 */
 	"kv_namespaces": [
 		{
-			"binding": "LOOKUP_KV",
-			// These IDs will be populated by the deploy.sh script
-			// or need to be filled in manually if not using the script.
-			"id": "YOUR_KV_ID_WILL_BE_POPULATED_BY_DEPLOY_SCRIPT",
-			"preview_id": "YOUR_PREVIEW_KV_ID_WILL_BE_POPULATED_BY_DEPLOY_SCRIPT"
+			"binding": "PLACEHOLDER_KV_BINDING_NAME", // Placeholder
+			// ID and preview_id will be populated by the deploy.sh script
+			"id": "YOUR_KV_ID_WILL_BE_POPULATED_BY_DEPLOY_SCRIPT", // Placeholder
+			"preview_id": "YOUR_PREVIEW_KV_ID_WILL_BE_POPULATED_BY_DEPLOY_SCRIPT" // Placeholder
 		}
 	],
 	/**
@@ -51,9 +50,9 @@
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
 	 */
 	"vars": {
-		"CACHE_TTL_MINUTES": "5", // Note: Default TTL is now set higher in src/index.ts
-		"API_KEY": "your-api-key-here" // Changed from API_SECRET
-	}, // Removed trailing comma here
+		"CACHE_TTL_MINUTES": "5" // Note: Default TTL is now set higher in src/index.ts
+		// API_KEY should ONLY be a secret, not a plain text var. Removed from here.
+	},
 	/**
 	 * Note: Use secrets to store sensitive data.
 	 * API_KEY and SHARED_SECRET should be added via wrangler secret:

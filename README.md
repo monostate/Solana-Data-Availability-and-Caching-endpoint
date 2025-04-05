@@ -92,16 +92,24 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
-This script will:
-1.  Check if you are logged into Wrangler (`wrangler login`).
-2.  Check for the `LOOKUP_KV` KV namespace and create it if it doesn't exist (including a preview namespace). It will attempt to update `wrangler.jsonc` with the correct IDs if placeholders are present.
-3.  Prompt you to set secrets (`SOLANA_RPC_URL`, `API_KEY`, `SHARED_SECRET`) using `wrangler secret put`. **These secrets are used for the deployed worker, not the `.dev.vars` file.**
-4.  Deploy the worker using `wrangler deploy`.
-5.  Optionally guide you through setting up a custom domain via the Cloudflare dashboard.
+This script automates the deployment process:
 
-After deployment, the script will output your worker's URL (e.g., `https://solana-rpc-cache-worker.<your-subdomain>.workers.dev`).
+1.  **Checks for Existing Config:** Looks for a previous deployment configuration in `.dev.vars`. If found, asks if you want to reuse it.
+2.  **Prompts for Name:** If no existing config is found or you choose not to reuse, it prompts for a unique deployment name (e.g., `my-solana-cache`). This name is used to derive the worker name, KV namespace title, and R2 bucket name.
+3.  **Updates `wrangler.jsonc`:** Overwrites `wrangler.jsonc` with the derived worker name, KV binding name, and R2 bucket name. It verifies this update.
+4.  **Creates KV Namespace:** Creates the necessary KV namespace (e.g., `my-solana-cache-kv`) and its preview version if they don't exist. It then updates `wrangler.jsonc` with the obtained KV namespace IDs.
+5.  **Creates R2 Bucket:** Creates the R2 bucket (e.g., `my-solana-cache-cache`) if it doesn't exist.
+6.  **Sets Secrets:** Prompts if you want to set secrets now. If yes:
+    *   Asks for your Solana RPC URL (e.g., your Helius URL).
+    *   Generates a secure `API_KEY` and `SHARED_SECRET`.
+    *   Uses `wrangler secret put` to set `SOLANA_RPC_URL`, `API_KEY`, `SHARED_SECRET`, and `KV_BINDING_NAME` for the deployed worker.
+    *   Includes a verification loop for `API_KEY` to handle potential propagation delays.
+    *   Asks if you want to update your local `.dev.vars` with the generated secrets for local testing.
+7.  **Deploys Worker:** Runs `wrangler deploy` to deploy the worker with the configured settings, bindings, and secrets.
+8.  **Custom Domain (Optional):** Asks if you want to set up a custom domain and guides you to the Cloudflare dashboard if needed.
+9.  **Verification:** Attempts to verify the deployment by fetching the `/status` endpoint.
 
-**Note:** The R2 bucket (`solana-rpc-cache` by default) will be created automatically by Wrangler during the first deployment if it doesn't exist.
+After deployment, the script will output your worker's URL (e.g., `https://my-solana-cache.<your-subdomain>.workers.dev`) and example `curl` commands.
 
 ## Usage
 
