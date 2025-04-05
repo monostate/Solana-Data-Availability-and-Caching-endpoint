@@ -1,16 +1,20 @@
 import { WorkerEntrypoint } from 'cloudflare:workers'
 // Removed: import { ProxyToSelf } from 'workers-mcp'
 import { Connection, PublicKey, clusterApiUrl, SlotInfo } from '@solana/web3.js'
-import { LookupTable, LookupEnv } from './lookup_table'
+import { LookupTable } from './lookup_table'
+// Removed LookupEnv interface import as binding name is dynamic
 
-// Define the Env interface with R2 bucket, KV, and ASSETS fetcher
-export interface Env extends LookupEnv {
+// Define the Env interface with R2 bucket, KV, and other settings
+// Note: The actual KV binding name is dynamic and passed via KV_BINDING_NAME
+export interface Env {
+  [key: string]: any; // Allow dynamic access for KV binding
   DATA_BUCKET: R2Bucket;
-  LOOKUP_KV: KVNamespace;
+  // LOOKUP_KV: KVNamespace; // Binding name is now dynamic
   SHARED_SECRET: string; // For admin endpoints
   API_KEY: string; // For general API access
   SOLANA_RPC_URL: string;
   CACHE_TTL_MINUTES: string;
+  KV_BINDING_NAME?: string; // Name of the KV namespace binding (set by deploy script)
   DISABLE_TTL?: string; // Optional: Set to "true" to disable TTL expiry
   // Removed: ASSETS: Fetcher;
 }
@@ -91,9 +95,25 @@ export default class MyWorker extends WorkerEntrypoint<Env> {
    * Load cache metrics from KV storage
    * @private
    */
+  private getKvNamespace(): KVNamespace | null {
+      const kvBindingName = this.env.KV_BINDING_NAME || 'PLACEHOLDER_KV_BINDING_NAME'; // Use placeholder as fallback
+      if (!this.env[kvBindingName]) {
+          console.error(`KV Namespace binding '${kvBindingName}' not found in environment. Check wrangler.jsonc and KV_BINDING_NAME env var.`);
+          return null;
+      }
+      return this.env[kvBindingName] as KVNamespace;
+  }
+
+  /**
+   * Load cache metrics from KV storage
+   * @private
+   */
   private async loadCacheMetrics(): Promise<void> {
+    const kvNamespace = this.getKvNamespace();
+    if (!kvNamespace) return;
+
     try {
-      const storedMetrics = await this.env.LOOKUP_KV.get('CACHE_METRICS');
+      const storedMetrics = await kvNamespace.get('CACHE_METRICS');
       if (storedMetrics) {
         this.cacheMetrics = JSON.parse(storedMetrics);
         console.log('Loaded cache metrics from KV:', this.cacheMetrics);
@@ -108,8 +128,11 @@ export default class MyWorker extends WorkerEntrypoint<Env> {
    * @private
    */
   private async saveCacheMetrics(): Promise<void> {
+    const kvNamespace = this.getKvNamespace();
+    if (!kvNamespace) return;
+
     try {
-      await this.env.LOOKUP_KV.put('CACHE_METRICS', JSON.stringify(this.cacheMetrics));
+      await kvNamespace.put('CACHE_METRICS', JSON.stringify(this.cacheMetrics));
     } catch (error) {
       console.error('Error saving cache metrics:', error);
     }
@@ -365,9 +388,14 @@ export default class MyWorker extends WorkerEntrypoint<Env> {
   /**
    * Get lookup table instance (lazy initialization)
    */
-  private getLookupTable(): LookupTable {
+  private getLookupTable(): LookupTable | null {
     if (!this.lookupTable) {
-      this.lookupTable = new LookupTable(this.env);
+        const kvNamespace = this.getKvNamespace();
+        if (kvNamespace) {
+             this.lookupTable = new LookupTable(kvNamespace); // Pass the KV namespace directly
+        } else {
+            return null; // Cannot initialize if KV is missing
+        }
     }
     return this.lookupTable;
   }
@@ -394,6 +422,10 @@ export default class MyWorker extends WorkerEntrypoint<Env> {
    */
   private async checkLookupTable(method: string, params: any[]): Promise<string | null> {
     const lookupTable = this.getLookupTable();
+    if (!lookupTable) {
+        console.error("checkLookupTable: LookupTable not initialized.");
+        return null; // Exit if lookupTable is null
+    }
 
     // Check based on method
     if (method === 'getTransaction' && params.length >= 1) {
@@ -428,6 +460,10 @@ export default class MyWorker extends WorkerEntrypoint<Env> {
    */
   private async updateLookupTable(method: string, params: any[], r2Key: string): Promise<void> {
     const lookupTable = this.getLookupTable();
+    if (!lookupTable) {
+        console.error("updateLookupTable: LookupTable not initialized. Skipping update.");
+        return; // Exit if lookupTable is null
+    }
 
     try {
       // Update based on method
@@ -876,6 +912,8 @@ export default class MyWorker extends WorkerEntrypoint<Env> {
    */
   private async listLookupEntries(prefix: string = ''): Promise<string[]> {
     const lookupTable = this.getLookupTable();
+    if (!lookupTable) return []; // Return empty if KV is missing
+
     try {
       const keys = await lookupTable.listKeys(prefix);
       return keys;
