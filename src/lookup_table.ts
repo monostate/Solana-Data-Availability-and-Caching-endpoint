@@ -1,16 +1,14 @@
 import { PublicKey } from '@solana/web3.js';
 
-// Interface for the environment with KV
-export interface LookupEnv {
-  LOOKUP_KV: KVNamespace;
-}
+// Interface removed as KVNamespace is passed directly
 
 /**
- * Lookup Table implementation using Cloudflare KV to map transaction IDs 
+ * Lookup Table implementation using Cloudflare KV to map transaction IDs
  * and addresses to R2 storage locations
  */
 export class LookupTable {
-  constructor(private env: LookupEnv) {}
+  // Accept the KVNamespace directly in the constructor
+  constructor(private kv: KVNamespace) {}
 
   /**
    * Store a mapping from a transaction ID to an R2 key
@@ -18,7 +16,8 @@ export class LookupTable {
    * @param r2Key R2 storage key
    */
   async storeTxMapping(txId: string, r2Key: string): Promise<void> {
-    await this.env.LOOKUP_KV.put(`tx:${txId}`, r2Key, {
+    // Use the passed-in kv namespace
+    await this.kv.put(`tx:${txId}`, r2Key, {
       expirationTtl: 60 * 60 * 24 * 7, // 7 days - historical tx data rarely changes
     });
   }
@@ -28,7 +27,7 @@ export class LookupTable {
    * @param txId Transaction ID
    */
   async getTxMapping(txId: string): Promise<string | null> {
-    return this.env.LOOKUP_KV.get(`tx:${txId}`);
+    return this.kv.get(`tx:${txId}`);
   }
 
   /**
@@ -41,8 +40,8 @@ export class LookupTable {
     try {
       // Validate it's a real public key
       new PublicKey(mintAddress);
-      
-      await this.env.LOOKUP_KV.put(`mint:${mintAddress}`, r2Key, {
+
+      await this.kv.put(`mint:${mintAddress}`, r2Key, {
         expirationTtl: ttlSeconds,
       });
     } catch (error) {
@@ -55,7 +54,7 @@ export class LookupTable {
    * @param mintAddress Token mint address
    */
   async getMintMapping(mintAddress: string): Promise<string | null> {
-    return this.env.LOOKUP_KV.get(`mint:${mintAddress}`);
+    return this.kv.get(`mint:${mintAddress}`);
   }
 
   /**
@@ -68,8 +67,8 @@ export class LookupTable {
     try {
       // Validate it's a real public key
       new PublicKey(accountAddress);
-      
-      await this.env.LOOKUP_KV.put(`acct:${accountAddress}`, r2Key, {
+
+      await this.kv.put(`acct:${accountAddress}`, r2Key, {
         expirationTtl: ttlSeconds,
       });
     } catch (error) {
@@ -82,7 +81,7 @@ export class LookupTable {
    * @param accountAddress Account address
    */
   async getAccountMapping(accountAddress: string): Promise<string | null> {
-    return this.env.LOOKUP_KV.get(`acct:${accountAddress}`);
+    return this.kv.get(`acct:${accountAddress}`);
   }
 
   /**
@@ -91,7 +90,7 @@ export class LookupTable {
    * @param r2Key R2 storage key
    */
   async storeDataHash(dataHash: string, r2Key: string): Promise<void> {
-    await this.env.LOOKUP_KV.put(`hash:${dataHash}`, r2Key, {
+    await this.kv.put(`hash:${dataHash}`, r2Key, {
       expirationTtl: 60 * 60 * 24 * 30, // 30 days - hashed data doesn't change
     });
   }
@@ -101,7 +100,7 @@ export class LookupTable {
    * @param dataHash Hash of the data
    */
   async getDataHash(dataHash: string): Promise<string | null> {
-    return this.env.LOOKUP_KV.get(`hash:${dataHash}`);
+    return this.kv.get(`hash:${dataHash}`);
   }
 
   /**
@@ -111,8 +110,8 @@ export class LookupTable {
    */
   async listKeys(prefix: string, limit = 100): Promise<string[]> {
     const keys: string[] = [];
-    const list = await this.env.LOOKUP_KV.list({ prefix, limit });
-    
+    const list = await this.kv.list({ prefix, limit });
+
     for (const key of list.keys) {
       keys.push(key.name);
     }
@@ -125,6 +124,6 @@ export class LookupTable {
    * @param key Full key name
    */
   async deleteKey(key: string): Promise<void> {
-    await this.env.LOOKUP_KV.delete(key);
+    await this.kv.delete(key);
   }
-} 
+}
